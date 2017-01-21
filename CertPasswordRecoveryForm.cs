@@ -437,11 +437,11 @@ namespace CertificatePasswordRecovery
         {
             try
             {
+                string ExitLogFile = Application.StartupPath + @"\CertPasswordRecoveryFormShutdownLog.txt";
+                try { File.Delete(ExitLogFile); } catch { }
                 string lastMessage = File.ReadLines(logpath).Last();
                 if (!lastMessage.Contains("Found Password: "))
                 {
-                    string ExitLogFile = Application.StartupPath + @"\CertPasswordRecoveryFormShutdownLog.txt";
-                    try { File.Delete(ExitLogFile); } catch { }
                     using (TextWriter ExitLogger = File.AppendText(ExitLogFile))
                     {
                         ExitLogger.WriteLine(DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + ": Shutting down " + Application.ProductName);
@@ -465,7 +465,7 @@ namespace CertificatePasswordRecovery
                     }
                 }
             }
-            catch(Exception ex) { MessageBox.Show(ex.Message); }            
+            catch/*(Exception ex)*/ { /*MessageBox.Show(ex.Message);*/ }            
         }
 
         private void CertPasswordRecoveryForm_Load(object sender, EventArgs e)

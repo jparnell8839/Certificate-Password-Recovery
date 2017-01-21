@@ -1,3 +1,9 @@
+v 1.0.0.2
+
+* Moved the portion of deleting the log
+* Disabled a debugging messagebox
+
+-----------------------------------
 v 1.0.0.1
 
 * Added "Exit Logging" to record settings on application exit
