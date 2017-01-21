@@ -10,13 +10,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
  */
 
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading;
 using System.Windows.Forms;
 
 namespace CertificatePasswordRecovery
@@ -38,7 +36,13 @@ namespace CertificatePasswordRecovery
         //  1 == Success Only (Default)
         //  2 == Every 10,000 + Success
         //  3 == Everything
-        int LogLevel;
+        int LogLevel, MaxGenChar;
+
+        BigInteger TotalPasswordCount;
+
+        string LastLogMessage, LastTriedPW, SavedSuffix, SavedPrefix, logpath, certpath;
+
+        bool overridefirstlog = false;
 
         // X509 Certificate object used while trying to decrypt the keystore / certificate
         X509Certificate2 certificate;
@@ -53,6 +57,8 @@ namespace CertificatePasswordRecovery
 
             // Set the 'Starting String' max character limit
             startStringBx.MaxLength = (int)maxGenBx.Value;
+
+            Application.ApplicationExit += new EventHandler(this.OnApplicationExit);
         }
 
         /// <summary>
@@ -105,6 +111,11 @@ namespace CertificatePasswordRecovery
             logPathBx.ReadOnly = true;
             logLevelBx.Enabled = false;
             recoverPasswordBtn.Enabled = false;
+
+            SavedSuffix = suffixBx.Text;
+            SavedPrefix = prefixBx.Text;
+            logpath = logPathBx.Text;
+            certpath = pathToCertBx.Text;
 
             // Make the progress bar visible:
             progressBar.Style = ProgressBarStyle.Marquee;
@@ -273,6 +284,7 @@ namespace CertificatePasswordRecovery
                 }
                 string pw = new string(password_sequenced);
                 pw = pw.Trim();
+                LastTriedPW = pw;
                 // Prepend the 'prefix' string (if one is entered)
                 if (prefixBx.Text.Length > 0)
                 {
@@ -293,6 +305,7 @@ namespace CertificatePasswordRecovery
                 }
 
                 // Loop counter. Keep counting!
+                TotalPasswordCount = i;
                 i++;
             }
             while (BigInteger.Compare(i, RepeatUntil) <= 0);
@@ -328,6 +341,11 @@ namespace CertificatePasswordRecovery
             }
             catch
             {
+                if (overridefirstlog)
+                {
+                    Log("Password Failed: " + CertificatePassword, LogFileLocation, PasswordNumber);
+                    overridefirstlog = false;
+                }
                 // If we don't find the password (likely at first, given the sheer number of possible passwords)
                 //  Handle logging in accordance with the user's settings
                 switch (LogLevel)
@@ -360,6 +378,7 @@ namespace CertificatePasswordRecovery
         /// <param name="LogFile">Location of the Log file in the file system</param>
         private void Log(string logMessage, string LogFile, BigInteger PasswordNumber)
         {
+            LastLogMessage = logMessage;
             using (TextWriter Logger = File.AppendText(LogFile))
             {
                     Logger.WriteLine("Log Entry #{0} : ", PasswordNumber);
@@ -391,6 +410,7 @@ namespace CertificatePasswordRecovery
         private void maxGenBx_ValueChanged(object sender, EventArgs e)
         {
             startStringBx.MaxLength = (int)maxGenBx.Value;
+            MaxGenChar = (int)maxGenBx.Value;
         }
 
         /// <summary>
@@ -411,6 +431,74 @@ namespace CertificatePasswordRecovery
         private void helpAboutLinkLbl_Click(object sender, EventArgs e)
         {
             System.Diagnostics.Process.Start("http://boredwookie.net/index.php/blog/certificate-password-recovery-tool/");
+        }
+
+        private void OnApplicationExit(object sender, EventArgs e)
+        {
+            try
+            {
+                string lastMessage = File.ReadLines(logpath).Last();
+                if (!lastMessage.Contains("Found Password: "))
+                {
+                    string ExitLogFile = Application.StartupPath + @"\CertPasswordRecoveryFormShutdownLog.txt";
+                    try { File.Delete(ExitLogFile); } catch { }
+                    using (TextWriter ExitLogger = File.AppendText(ExitLogFile))
+                    {
+                        ExitLogger.WriteLine(DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + ": Shutting down " + Application.ProductName);
+                        ExitLogger.WriteLine("Max Gen Characters: ");
+                        ExitLogger.WriteLine(MaxGenChar);
+                        ExitLogger.WriteLine("Last password tried: ");
+                        ExitLogger.WriteLine(LastTriedPW);
+                        ExitLogger.WriteLine("Saved Prefix: ");
+                        ExitLogger.WriteLine(SavedPrefix);
+                        ExitLogger.WriteLine("Saved Suffix: ");
+                        ExitLogger.WriteLine(SavedSuffix);
+                        ExitLogger.WriteLine("Certificate: ");
+                        ExitLogger.WriteLine(certpath);
+                        ExitLogger.WriteLine("Log path: ");
+                        ExitLogger.WriteLine(logpath);
+                        ExitLogger.WriteLine("Log Level: ");
+                        ExitLogger.WriteLine(LogLevel);
+                        ExitLogger.WriteLine(LastLogMessage);
+                        // Update the Log File
+                        ExitLogger.Flush();
+                    }
+                }
+            }
+            catch(Exception ex) { MessageBox.Show(ex.Message); }            
+        }
+
+        private void CertPasswordRecoveryForm_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                string ExitLogFile = Application.StartupPath + @"\CertPasswordRecoveryFormShutdownLog.txt";
+                string a = File.ReadLines(ExitLogFile).First();
+                if (a.Contains("Shutting down " + Application.ProductName))
+                {
+                    DialogResult resume = MessageBox.Show("It appears as if " + Application.ProductName + " shut down before completing." + Environment.NewLine +
+                        "Would you like to resume where you left off?", "Woops!", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                    if (resume == DialogResult.Yes)
+                    {
+                        overridefirstlog = true;
+                        string[] b = File.ReadLines(ExitLogFile).ToArray();
+
+                        int maxChar, logLevel;
+                        int.TryParse(b[2], out maxChar);
+                        int.TryParse(b[14], out logLevel);
+
+                        try { maxGenBx.Value = maxChar; } catch { }
+                        if (!String.IsNullOrWhiteSpace(b[4])) { startStringBx.Text = b[4]; }
+                        if (!String.IsNullOrWhiteSpace(b[4])) { prefixBx.Text = b[6]; }
+                        if (!String.IsNullOrWhiteSpace(b[4])) { suffixBx.Text = b[8]; }
+                        if (!String.IsNullOrWhiteSpace(b[4])) { pathToCertBx.Text = b[10]; }
+                        if (!String.IsNullOrWhiteSpace(b[4])) { logPathBx.Text = b[12]; }
+                        try { logLevelBx.SelectedIndex = logLevel; } catch { }
+
+                    }
+                }
+            }
+            catch { }
         }
     }
 }

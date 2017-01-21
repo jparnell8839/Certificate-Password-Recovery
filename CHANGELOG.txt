@@ -1,3 +1,9 @@
+v 1.0.0.1
+
+* Added "Exit Logging" to record settings on application exit
+* Added "Restore settings at program start on Incomplete password recovery"
+
+-----------------------------------
 v 1.0.0.0
 
 Initial source code, as downloaded by Rion Carter.

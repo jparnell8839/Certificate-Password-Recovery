@@ -1,5 +1,4 @@
 ﻿using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following 
@@ -8,7 +7,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("CertificatePasswordRecovery")]
 [assembly: AssemblyDescription("Can be used to recover a password for a p12 or pfx file using a brute force method")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Rion Carter")]
+[assembly: AssemblyCompany("Rion Carter & Joshua Parnell")]
 [assembly: AssemblyProduct("CertificatePasswordRecovery")]
 [assembly: AssemblyCopyright("Copyright © Rion Carter 2012")]
 [assembly: AssemblyTrademark("")]
@@ -32,5 +31,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyVersion("1.0.0.1")]
+[assembly: AssemblyFileVersion("1.0.0.1")]

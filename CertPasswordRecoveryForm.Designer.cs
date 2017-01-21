@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(CertPasswordRecoveryForm));
             this.maxGenLbl = new System.Windows.Forms.Label();
             this.maxGenBx = new System.Windows.Forms.NumericUpDown();
             this.prefixLbl = new System.Windows.Forms.Label();
@@ -286,10 +287,12 @@
             this.Controls.Add(this.maxGenBx);
             this.Controls.Add(this.maxGenLbl);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MinimumSize = new System.Drawing.Size(395, 385);
             this.Name = "CertPasswordRecoveryForm";
             this.Text = "Certificate Password Recovery Tool";
+            this.Load += new System.EventHandler(this.CertPasswordRecoveryForm_Load);
             ((System.ComponentModel.ISupportInitialize)(this.maxGenBx)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
